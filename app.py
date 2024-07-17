@@ -117,6 +117,8 @@ def slack_events():
     data = request.get_json(silent=True)
     headers = request.headers
 
+    print("[DATA]: ", data, "\n[HEADER]: ", headers)
+
     if data is None or headers.get(SLACK_RETRY_KEY, 0, type=int) > 1:
         return jsonify()
 
