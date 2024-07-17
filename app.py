@@ -18,6 +18,7 @@ REF = os.environ["BRANCH"]
 ISSUE_LABELS = os.environ["GITHUB_ISSUE_LABELS"]
 ISSUE_TEMPLATE = os.environ["GITHUB_ISSUE_TEMPLATE"]
 
+SLACK_WEBHOOK_URL = os.environ["SLACK_WEBHOOK_URL"]
 SLACK_URL_VERFICATION_KEY = "url_verification"
 SLACK_RETRY_KEY = "x-slack-retry-num"
 
@@ -90,7 +91,8 @@ def create_github_issue(message_timestamp, message_text):
             "description": description,
             "labels": ISSUE_LABELS,
             "template": ISSUE_TEMPLATE,
-            "slack-thread-timestamp": message_timestamp
+            "slack-thread-timestamp": message_timestamp,
+            "slack-webhook-url": SLACK_WEBHOOK_URL
         }
     }
 
