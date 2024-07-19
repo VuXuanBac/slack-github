@@ -48,7 +48,6 @@ def slack_to_markdown(slack_message):
     return markdown_message
 
 def parse_message(message):
-    print("[PARSE]", message)
     DATETIME_INPUT_FORMAT = "%a, %d %b %Y %H:%M:%S %Z"
 
     PATTERNS = {
@@ -107,12 +106,15 @@ def create_github_issue(message_timestamp, message_text):
         print("[        FAIL] Trigger GitHub Action workflow: ", response.text)
 
 def handle_slack_event(event):
-    print("[EVENT]: ", event)
-    if event.get("type", "") == "message":
+
+    if event.get("type", "") == "message" or event.get("subtype", "message") == "message":
         message_timestamp = event.get("ts", "")
         message_text = event.get("text", "")
 
-        create_github_issue(message_timestamp, message_text)
+        if message_timestamp and message_text:
+            return create_github_issue(message_timestamp, message_text)
+
+    print("[STOP] Invalid event object", event)
 
 @app.route("/slack/events", methods=["POST"])
 def slack_events():
