@@ -48,12 +48,13 @@ def slack_to_markdown(slack_message):
     return markdown_message
 
 def parse_message(message):
+    print("[PARSE]", message)
     DATETIME_INPUT_FORMAT = "%a, %d %b %Y %H:%M:%S %Z"
 
     PATTERNS = {
         "url": [r"<(https?://\S+?)\|", lambda x: html.unescape(x)],
-        "type": [r"\*Event type code\*\n(.+)\n", lambda x: x.replace("_", " ")],
-        "datetime": r"\*Start time\*\n(.+)\n"
+        "type": [r"\*Event type code\*\n(.+?)\n", lambda x: x.replace("_", " ")],
+        "datetime": r"\*Start time\*\n(.+?)\n"
     }
     data = {}
     for key, desc in PATTERNS.items():
@@ -65,11 +66,13 @@ def parse_message(message):
         if match:
             data[key] = format(match.group(1))
 
-    return  f"[{datetime.strftime(datetime.strptime(data['datetime'], DATETIME_INPUT_FORMAT), '%Y%m%d')}] Health Event: {data['type']}", \
+    timestamp = datetime.strptime(data.get("datetime"), DATETIME_INPUT_FORMAT) if "datetime" in data else datetime.now()
+
+    return  f"[{datetime.strftime(timestamp, '%Y%m%d')}] Health Event: {data.get('type', '')}", \
                 base64.b64encode(json.dumps({
                     "SCREENSHOT" : slack_to_markdown(message),
-                    "DATETIME" : data["datetime"],
-                    "URL" : data["url"],
+                    "DATETIME" : data.get("datetime", datetime.strftime(timestamp, DATETIME_INPUT_FORMAT)),
+                    "URL" : data.get("url", ""),
                 }).encode()).decode()
 
 
@@ -96,7 +99,6 @@ def create_github_issue(message_timestamp, message_text):
         }
     }
 
-    print("[ISSUE Data]", data)
     response = requests.post(url, headers=headers, json=data)
 
     if response.status_code == 204:
@@ -116,8 +118,6 @@ def handle_slack_event(event):
 def slack_events():
     data = request.get_json(silent=True)
     headers = request.headers
-
-    print("[DATA]: ", data, "\n[HEADER]: ", headers)
 
     if data is None or headers.get(SLACK_RETRY_KEY, 0, type=int) > 1:
         return jsonify()
